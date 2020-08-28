@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { ApplicationState } from '../../store'
 import { useHistory, useLocation } from 'react-router-dom'
 import { REGEX_FIRST_PATH } from '../../shared/constants'
-import { BottomNavigation, BottomNavigationAction } from '@material-ui/core'
+import { BottomNavigation, BottomNavigationAction, Divider, Box } from '@material-ui/core'
 import { InstallationNotice } from '../InstallationNotice'
 import { LoadingMessage } from '../LoadingMessage'
 import { makeStyles } from '@material-ui/core/styles'
@@ -13,7 +13,7 @@ import { Router } from '../Router'
 import { Body } from '../Body'
 import { Icon } from '../Icon'
 import { Page } from '../../pages/Page'
-import styles from '../../styling'
+import { colors } from '../../styling'
 
 export const App: React.FC = () => {
   const { installed, signedOut, uninstalling } = useSelector((state: ApplicationState) => ({
@@ -26,6 +26,7 @@ export const App: React.FC = () => {
   const history = useHistory()
   const location = useLocation()
   const [navigation, setNavigation] = useState<{ [menu: string]: string }>({})
+  const [pageWidth, setPageWidth] = useState<number>(window.innerWidth)
 
   const match = location.pathname.match(REGEX_FIRST_PATH)
   const menu = match ? match[0] : '/'
@@ -35,6 +36,15 @@ export const App: React.FC = () => {
     if (!stored || stored === location.pathname) history.push(selected)
     else history.push(stored)
   }
+
+  const updateWidth = () => setPageWidth(window.innerWidth)
+
+  useEffect(() => {
+    window.addEventListener('resize', updateWidth)
+    return function cleanup() {
+      window.removeEventListener('resize', updateWidth)
+    }
+  })
 
   useEffect(() => {
     if (navigation[menu] !== location.pathname) {
@@ -69,9 +79,21 @@ export const App: React.FC = () => {
   return (
     <Page>
       <Header />
-      <Body>
-        <Router />
-      </Body>
+      {pageWidth > 800 ? (
+        <Box className={css.panels}>
+          <Body>
+            <Router panel={1} />
+          </Body>
+          <Divider orientation="vertical" />
+          <Body>
+            <Router panel={2} />
+          </Body>
+        </Box>
+      ) : (
+        <Body>
+          <Router />
+        </Body>
+      )}
       <BottomNavigation className={css.footer} value={menu} onChange={changeNavigation} showLabels>
         <BottomNavigationAction label="Connections" value="/connections" icon={<Icon name="scrubber" size="lg" />} />
         <BottomNavigationAction label="Devices" value="/devices" icon={<Icon name="chart-network" size="lg" />} />
@@ -82,8 +104,22 @@ export const App: React.FC = () => {
 }
 
 const useStyles = makeStyles({
+  panels: {
+    display: 'flex',
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'start',
+    justifyContent: 'start',
+    height: '100%',
+    '& > *:first-child': {
+      minWidth: 500,
+    },
+    '& > *:second-child:hover': {
+      borderRight: `2px solid ${colors.primary}`,
+    },
+  },
   footer: {
-    borderTop: `1px solid ${styles.colors.grayLight}`,
+    borderTop: `1px solid ${colors.grayLight}`,
     minHeight: 62,
     justifyContent: 'space-evenly',
     '& .MuiButtonBase-root': { maxWidth: '18%' },

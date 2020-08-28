@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
+import { Switch, Route, Redirect, useHistory } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { ApplicationState } from '../../store'
 import { isElectron } from '../../services/Browser'
-import { Switch, Route, Redirect, useHistory } from 'react-router-dom'
 import { usePermissions } from '../../hooks/usePermissions'
 import { SettingsPage } from '../../pages/SettingsPage'
 import { ConnectionsPage } from '../../pages/ConnectionsPage'
@@ -19,7 +19,7 @@ import { LanSharePage } from '../../pages/LanSharePage'
 import { UsersPage } from '../../pages/UsersPage'
 import { LogPage } from '../../pages/LogPage'
 
-export const Router: React.FC = () => {
+export const Router: React.FC<{ panel?: 1 | 2 }> = ({ panel }) => {
   const { device, targets, dataReady, os } = useSelector((state: ApplicationState) => ({
     device: state.backend.device,
     targets: state.backend.targets,
@@ -42,7 +42,24 @@ export const Router: React.FC = () => {
     }
   }, [dataReady])
 
-  return (
+  const panelOne = (
+    <Switch>
+      <Route path="/connections">
+        <ConnectionsPage />
+      </Route>
+      <Route path="/devices">
+        <DevicesPage />
+      </Route>
+      <Route path="/settings">
+        <SettingsPage />
+      </Route>
+      <Route exact path="/">
+        <Redirect to="/devices" />
+      </Route>
+    </Switch>
+  )
+
+  const panelTwo = (
     <Switch>
       <Route path="/connections/:serviceID/lan">
         <LanSharePage />
@@ -55,9 +72,6 @@ export const Router: React.FC = () => {
       </Route>
       <Route path="/connections/:serviceID">
         <ServicePage />
-      </Route>
-      <Route path="/connections">
-        <ConnectionsPage />
       </Route>
       <Route path={['/settings/setupServices/network', '/devices/setupServices/network']}>
         <NetworkPage />
@@ -98,15 +112,20 @@ export const Router: React.FC = () => {
       <Route path="/devices/:deviceID">
         <ServicesPage />
       </Route>
-      <Route path="/devices">
-        <DevicesPage />
-      </Route>
-      <Route path="/settings">
-        <SettingsPage />
-      </Route>
-      <Route exact path="/">
-        <Redirect to="/devices" />
-      </Route>
     </Switch>
   )
+
+  switch (panel) {
+    case 1:
+      return panelOne
+    case 2:
+      return panelTwo
+    default:
+      return (
+        <>
+          {panelTwo}
+          {panelOne}
+        </>
+      )
+  }
 }

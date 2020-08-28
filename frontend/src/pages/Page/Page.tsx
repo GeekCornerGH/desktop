@@ -98,7 +98,7 @@ const useStyles = makeStyles({
     display: 'flex',
     flexFlow: 'row',
     backgroundColor: colors.white,
-    maxWidth: 1000,
+    maxWidth: 1200,
     margin: 'auto',
     boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
   },
