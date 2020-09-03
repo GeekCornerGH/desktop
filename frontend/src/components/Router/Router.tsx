@@ -9,19 +9,24 @@ import { ConnectionsPage } from '../../pages/ConnectionsPage'
 import { SetupServices } from '../../pages/SetupServices'
 import { SetupDevice } from '../../pages/SetupDevice'
 import { SetupWaiting } from '../../pages/SetupWaiting'
-import { SetupSuccess } from '../../pages/SetupSuccess'
 import { SetupView } from '../../pages/SetupView'
 import { NetworkPage } from '../../pages/NetworkPage'
 import { DevicesPage } from '../../pages/DevicesPage'
+import { DeviceDetailPage } from '../../pages/DeviceDetailPage'
+import { ServiceDetailPage } from '../../pages/ServiceDetailPage'
 import { ServicesPage } from '../../pages/ServicesPage'
 import { ServicePage } from '../../pages/ServicePage'
 import { LanSharePage } from '../../pages/LanSharePage'
-import { UsersPage } from '../../pages/UsersPage'
+import { UsersPageService } from '../../pages/UsersPageService'
+import { UsersPageDevice } from '../../pages/UsersPageDevice'
 import { LogPage } from '../../pages/LogPage'
+import { DeviceEditPage } from '../../pages/DeviceEditPage'
+import { ServiceEditPage } from '../../pages/ServiceEditPage'
+import { SharePage } from '../../pages/SharePage/SharePage'
 
 export const Router: React.FC<{ panel?: 1 | 2 }> = ({ panel }) => {
-  const { device, targets, dataReady, os } = useSelector((state: ApplicationState) => ({
-    device: state.backend.device,
+  const { targetDevice, targets, dataReady, os } = useSelector((state: ApplicationState) => ({
+    targetDevice: state.backend.device,
     targets: state.backend.targets,
     dataReady: state.backend.dataReady,
     uninstalling: state.ui.uninstalling,
@@ -29,16 +34,15 @@ export const Router: React.FC<{ panel?: 1 | 2 }> = ({ panel }) => {
   }))
   const { guest } = usePermissions()
   const history = useHistory()
-  const registered = !!device.uid
+  const registered = !!targetDevice.uid
 
   let setupLocation = 'setupDevice'
   if (registered) setupLocation = 'setupServices'
   if (guest) setupLocation = 'setupView'
 
   useEffect(() => {
-    if (dataReady) {
-      if (isElectron()) history.push('/')
-      else history.push('/devices/setup')
+    if (dataReady && history.location.pathname === '/') {
+      if (!isElectron()) history.push('/settings/setup')
     }
   }, [dataReady])
 
@@ -61,14 +65,18 @@ export const Router: React.FC<{ panel?: 1 | 2 }> = ({ panel }) => {
 
   const panelTwo = (
     <Switch>
+      <Redirect
+        from={'/connect/:serviceID'}
+        to={{
+          pathname: '/connections/:serviceID',
+          state: { autoConnect: true },
+        }}
+      />
       <Route path="/connections/:serviceID/lan">
         <LanSharePage />
       </Route>
       <Route path="/connections/:serviceID/log">
         <LogPage />
-      </Route>
-      <Route path="/connections/:serviceID/users">
-        <UsersPage />
       </Route>
       <Route path="/connections/:serviceID">
         <ServicePage />
@@ -77,19 +85,16 @@ export const Router: React.FC<{ panel?: 1 | 2 }> = ({ panel }) => {
         <NetworkPage />
       </Route>
       <Route path={['/settings/setupServices', '/devices/setupServices']}>
-        <SetupServices os={os} device={device} targets={targets} />
-      </Route>
-      <Route path={['/settings/setupSuccess', '/devices/setupSuccess']}>
-        <SetupSuccess os={os} device={device} />
+        <SetupServices os={os} targetDevice={targetDevice} targets={targets} />
       </Route>
       <Route path={['/settings/setupWaiting', '/devices/setupWaiting']}>
-        <SetupWaiting os={os} device={device} />
+        <SetupWaiting os={os} targetDevice={targetDevice} />
       </Route>
       <Route path={['/settings/setupDevice', '/devices/setupDevice']}>
-        <SetupDevice os={os} device={device} />
+        <SetupDevice os={os} targetDevice={targetDevice} />
       </Route>
       <Route path={['/settings/setupView', '/devices/setupView']}>
-        <SetupView device={device} targets={targets} />
+        <SetupView targetDevice={targetDevice} targets={targets} />
       </Route>
       <Route path="/devices/setup">
         <Redirect to={`/devices/${setupLocation}`} />
@@ -97,16 +102,43 @@ export const Router: React.FC<{ panel?: 1 | 2 }> = ({ panel }) => {
       <Route path="/settings/setup">
         <Redirect to={`/settings/${setupLocation}`} />
       </Route>
-      <Route path="/devices/:deviceID/:serviceID/lan">
+      <Route
+        path={[
+          '/connections/:serviceID/users/:email',
+          '/connections/:serviceID/users/share',
+          '/devices/:deviceID/:serviceID/users/share',
+          '/devices/:deviceID/:serviceID/users/:email',
+          '/devices/:deviceID/users/share',
+          '/devices/:deviceID/users/:email',
+        ]}
+      >
+        <SharePage />
+      </Route>
+      <Route path={['/devices/:deviceID/:serviceID/lan', '/connections/:serviceID/lan']}>
         <LanSharePage />
       </Route>
-      <Route path="/devices/:deviceID/:serviceID/log">
+      <Route path={['/devices/:deviceID/:serviceID/log', '/connections/:serviceID/log']}>
         <LogPage />
       </Route>
-      <Route path="/devices/:deviceID/:serviceID/users">
-        <UsersPage />
+      <Route path={['/devices/:deviceID/:serviceID/users', '/connections/:serviceID/users']}>
+        <UsersPageService />
       </Route>
-      <Route path="/devices/:deviceID/:serviceID">
+      <Route path={['/devices/:deviceID/:serviceID/details', '/connections/:serviceID/details']}>
+        <ServiceDetailPage />
+      </Route>
+      <Route path={['/devices/:deviceID/:serviceID/edit', '/connections/:serviceID/edit']}>
+        <ServiceEditPage targets={targets} />
+      </Route>
+      <Route path="/devices/:deviceID/users">
+        <UsersPageDevice />
+      </Route>
+      <Route path="/devices/:deviceID/details">
+        <DeviceDetailPage />
+      </Route>
+      <Route path="/devices/:deviceID/edit">
+        <DeviceEditPage targetDevice={targetDevice} targets={targets} />
+      </Route>
+      <Route path={['/devices/:deviceID/:serviceID', '/connections/:serviceID']}>
         <ServicePage />
       </Route>
       <Route path="/devices/:deviceID">

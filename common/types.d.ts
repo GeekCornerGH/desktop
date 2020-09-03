@@ -27,6 +27,7 @@ declare global {
     | 'service/forget'
     | 'service/restart'
     | 'service/clear-recent'
+    | 'service/launch'
 
     // App/settings
     | 'app/open-on-login'
@@ -76,6 +77,7 @@ declare global {
     | 'service/throughput'
     | 'service/version'
     | 'service/unknown-event'
+    | 'service/putty/required'
 
     // binary
     | 'binary/install/start'
@@ -163,6 +165,7 @@ declare global {
     secret?: string //      password
     port: number //         proxy_dest_port    service port
     type: number //         application_type   service type
+    disabled: boolean //    service enabled / disabled
   }
 
   interface ITargetDevice extends ITarget {}
@@ -192,6 +195,12 @@ declare global {
     shared: boolean
     services: IService[]
     hidden?: boolean
+    access: IUser[]
+    attributes: ILookup & {
+      name?: string
+      color?: number
+      accessDisabled?: boolean
+    }
   }
 
   interface IService {
@@ -208,9 +217,9 @@ declare global {
     port?: number
     sessions: IUser[]
     access: IUser[]
-    // @TODO remove owner and targetPlatform after serviceName is refactored to separate device from service
-    owner?: string
-    targetPlatform?: number
+    attributes: {
+      name?: string
+    }
   }
 
   type IUser = {
@@ -218,6 +227,7 @@ declare global {
     timestamp?: Date
     created?: Date
     platform?: number
+    scripting?: boolean
   }
 
   type gqlOptions = {
@@ -236,6 +246,12 @@ declare global {
   interface IOob {
     oobAvailable: boolean
     oobActive: boolean
+  }
+
+  interface IPuttyValidation {
+    install: boolean,
+    loading: boolean,
+    pathPutty: string
   }
 
   interface ILan {
@@ -277,6 +293,8 @@ declare global {
 
   type ILookup = { [key: string]: any }
 
+  type ISelect = { [key: string]: string | number }
+
   type IPreferences = ILookup
 
   type SegmentContext = {
@@ -308,6 +326,13 @@ declare global {
       platform?: number
       appCode?: number //called manufacturerId in connectd
     }
+  }
+
+  type IShareProps = {
+    deviceId: String,
+    email: String[]!,
+    scripting?: boolean,
+    services?: IService[]
   }
 }
 

@@ -1,11 +1,14 @@
 import { graphQLFetch, graphQLAdaptor, graphQLGet } from '../services/graphQL'
+import { graphQLSetAttributes } from '../services/graphQLMutation'
 import { createModel } from '@rematch/core'
 import { r3, hasCredentials } from '../services/remote.it'
 import { cleanOrphanConnections } from '../helpers/connectionHelper'
+import { IContact } from 'remote.it'
 
 type DeviceParams = { [key: string]: any }
 
 type IDeviceState = DeviceParams & {
+  initialized: boolean
   all: IDevice[]
   total: number
   results: number
@@ -18,9 +21,11 @@ type IDeviceState = DeviceParams & {
   filter: 'all' | 'active' | 'inactive'
   size: number
   from: number
+  contacts: IContact[]
 }
 
 const state: IDeviceState = {
+  initialized: false,
   all: [],
   total: 0,
   results: 0,
@@ -33,6 +38,7 @@ const state: IDeviceState = {
   filter: 'all',
   size: 50,
   from: 0,
+  contacts: [],
 }
 
 export default createModel({
@@ -61,15 +67,15 @@ export default createModel({
       if (!hasCredentials()) return
 
       set({ fetching: true })
-      const { devices, total } = await graphQLFetchProcessor(options)
+      const { devices, total, contacts } = await graphQLFetchProcessor(options)
 
       if (searched) set({ results: total })
       else set({ total })
 
-      if (append) set({ all: [...all, ...devices] })
+      if (append) set({ all: [...all, ...devices], contacts })
       else set({ all: devices })
 
-      set({ fetching: false, append: false })
+      set({ initialized: true, fetching: false, append: false, contacts })
 
       cleanOrphanConnections()
       dispatch.ui.devicesUpdated()
@@ -82,7 +88,7 @@ export default createModel({
         const [gqlData, total] = await graphQLMetadata(gqlResponse)
         const connections = graphQLAdaptor(gqlData?.connections, gqlData?.id, true)
         const devices = graphQLAdaptor(gqlData?.devices, gqlData?.id)
-        return { devices: [...connections, ...devices], total }
+        return { devices: [...connections, ...devices], total, contacts: gqlData?.contacts }
       } catch (error) {
         await graphQLError(error)
         return { devices: [], total: 0 }
@@ -113,6 +119,11 @@ export default createModel({
       setDevice({ id, device: result })
     },
 
+    async updateShareDevice(device: IDevice) {
+      const { setDevice } = dispatch.devices
+      setDevice({ id: device.id, device })
+    },
+
     async graphQLError(error) {
       console.error('Fetch error:', error, error.response)
       if (error && error.response && (error.response.status === 401 || error.response.status === 403)) {
@@ -130,7 +141,7 @@ export default createModel({
         dispatch.backend.set({ globalError: 'GraphQL: ' + errors[0].message })
       }
 
-      const data = gqlData?.data?.data?.login
+      const data = gqlData?.data?.data?.login || {}
       const total = data?.devices?.total || 0
 
       return [data, total]
@@ -138,7 +149,20 @@ export default createModel({
 
     async reset() {
       dispatch.backend.set({ connections: [] })
-      dispatch.devices.set({ all: [], query: '', filter: 'all' })
+      dispatch.devices.set({ all: [], query: '', filter: 'all', initialized: false })
+    },
+
+    async setAttributes(device: IDevice) {
+      graphQLSetAttributes(device.attributes, device.id)
+      dispatch.devices.setDevice({ id: device.id, device })
+    },
+
+    async setServiceAttributes(service: IService, globalState: any) {
+      let device = globalState.devices.all.find((d: IDevice) => d.id === service.deviceID)
+      const index = device.services.findIndex((s: IService) => s.id === service.id)
+      device.services[index].attributes = service.attributes
+      graphQLSetAttributes(service.attributes, service.id)
+      dispatch.devices.setDevice({ id: device.id, device })
     },
 
     async destroy(device: IDevice, globalState: any) {
@@ -192,6 +216,27 @@ export function findService(devices: IDevice[], id: string) {
       }
       return all
     },
-    [null, null] as [IService | null, IDevice | null]
+    [undefined, undefined] as [IService | undefined, IDevice | undefined]
   )
+}
+
+export function getUsersConnectedDeviceOrService(device?: IDevice, service?: IService) {
+  const userConnected: IUser[] = []
+
+  const getSessionService = (s: IService) =>
+    s?.sessions.forEach(session => !userConnected.includes(session) && userConnected.push(session))
+
+  if (service) getSessionService(service)
+  else if (device) device.services.forEach(getSessionService)
+  return userConnected
+}
+
+export function getDetailUserPermission(device: IDevice, emailUser: string) {
+  const services =
+    device.services.filter(service => service.access && service.access.find(_ac => _ac.email === emailUser)) || []
+  return {
+    scripting: device?.access.find(_ac => _ac.email === emailUser)?.scripting || false,
+    numberServices: services.length,
+    services,
+  }
 }

@@ -5,17 +5,19 @@ import { List, Divider, Typography, Tooltip, ButtonBase } from '@material-ui/cor
 import { useSelector, useDispatch } from 'react-redux'
 import { DeviceSetupItem } from '../../components/DeviceSetupItem'
 import { ApplicationState, Dispatch } from '../../store'
-import { SettingsListItem } from '../../components/SettingsListItem'
 import { SettingsDisableNetworkItem } from '../../components/SettingsDisableNetworkItem'
 import { UninstallSetting } from '../../components/UninstallSetting'
+import { ListItemSetting } from '../../components/ListItemSetting'
 import { usePermissions } from '../../hooks/usePermissions'
 import { UpdateSetting } from '../../components/UpdateSetting'
 import { makeStyles } from '@material-ui/core/styles'
 import { OutOfBand } from '../../components/OutOfBand'
 import { Container } from '../../components/Container'
 import { spacing } from '../../styling'
+import { Avatar } from '../../components/Avatar'
+import { Title } from '../../components/Title'
 import { Logo } from '../../components/Logo'
-import analytics from '../../helpers/Analytics'
+import analyticsHelper from '../../helpers/analyticsHelper'
 
 export const SettingsPage = () => {
   const { os, user, installing, cliVersion, preferences } = useSelector((state: ApplicationState) => ({
@@ -25,20 +27,21 @@ export const SettingsPage = () => {
     cliVersion: state.binaries.installedVersion || '(loading...)',
     preferences: state.backend.preferences,
   }))
-
   const css = useStyles()
-
   const { guest, notElevated } = usePermissions()
   const { binaries } = useDispatch<Dispatch>()
 
   const quitWarning = () =>
     window.confirm('Are you sure? Quitting will not close your connections.') && emit('user/quit')
   const signOutWarning = () => {
-    window.confirm(
-      'Are you sure?\n\nSigning out will leave all active connections and hosted services running.\n\nIf you wish to transfer the device you must clear your credentials.'
-    ) && emit('user/sign-out')
-    analytics.track('signOut')
-    analytics.clearIdentity()
+    if (
+      window.confirm(
+        'Are you sure?\n\nSigning out will leave all active connections and hosted services running.\n\nIf you wish to transfer the device you must clear your credentials.'
+      )
+    ) {
+      emit('user/sign-out')
+      analyticsHelper.track('signOut')
+    }
   }
 
   const clearWarning = () =>
@@ -49,7 +52,7 @@ export const SettingsPage = () => {
     binaries.install(true)
 
   useEffect(() => {
-    analytics.page('SettingsPage')
+    analyticsHelper.page('SettingsPage')
   }, [])
 
   return (
@@ -57,12 +60,15 @@ export const SettingsPage = () => {
       header={
         <>
           <OutOfBand />
-          <Typography className={css.header} variant="h1">
-            <Tooltip title="Visit remote.it on the web">
-              <ButtonBase onClick={() => window.open('https://remote.it')}>
-                <Logo width={110} />
-              </ButtonBase>
-            </Tooltip>
+          <Typography variant="h1">
+            <Title>
+              <Tooltip title="Visit remote.it on the web">
+                <ButtonBase onClick={() => window.open('https://remote.it')}>
+                  <Logo className={css.logo} width={110} />
+                </ButtonBase>
+              </Tooltip>
+            </Title>
+            <Avatar email={user?.email} />
           </Typography>
         </>
       }
@@ -73,31 +79,31 @@ export const SettingsPage = () => {
       <Divider />
       <Typography variant="subtitle1">User</Typography>
       <List>
-        <SettingsListItem
+        <ListItemSetting
           label="Help documentation"
           icon="books"
           onClick={() => window.open('https://docs.remote.it/desktop-help')}
         />
-        <SettingsListItem
+        <ListItemSetting
           label="Send feedback"
           icon="envelope"
           onClick={() =>
             (window.location.href = encodeURI(`mailto:support@remote.it?subject=Desktop v${version} Feedback`))
           }
         />
-        <SettingsListItem
+        <ListItemSetting
           label="Sign out"
           subLabel={`Signed in as ${user && user.username}`}
           icon="sign-out"
           onClick={signOutWarning}
         />
-        {!guest && <SettingsListItem label="Quit" icon="times" onClick={quitWarning} />}
+        {!guest && <ListItemSetting label="Quit" icon="times" onClick={quitWarning} />}
       </List>
       <Divider />
       <Typography variant="subtitle1">Application</Typography>
       <List>
         {(os === 'mac' || os === 'windows') && (
-          <SettingsListItem
+          <ListItemSetting
             label="Auto Update"
             icon="chevron-double-up"
             toggle={preferences.autoUpdate}
@@ -105,7 +111,7 @@ export const SettingsPage = () => {
           />
         )}
 
-        <SettingsListItem
+        <ListItemSetting
           label="Open at login"
           icon="power-off"
           toggle={preferences.openAtLogin}
@@ -119,7 +125,16 @@ export const SettingsPage = () => {
           <Typography variant="subtitle1">Advanced</Typography>
           <List>
             <SettingsDisableNetworkItem />
-            <SettingsListItem
+            <ListItemSetting
+              label={'Clear all credentials'}
+              subLabel={`This will remove all remote.it user credentials from this device, 
+                allowing the device to be transferred. The next user to sign in will claim 
+                this device. If another user does not sign in and claim the device,
+                the hosted services will only remain active until the next reboot.`}
+              icon="user-slash"
+              onClick={clearWarning}
+            />
+            <ListItemSetting
               label={installing ? 'Installing...' : 'Re-install command line tools'}
               subLabel={`Version ${cliVersion}`}
               disabled={installing}
@@ -127,16 +142,6 @@ export const SettingsPage = () => {
               onClick={installWarning}
             />
             <UninstallSetting />
-            <SettingsListItem
-              label={'Clear all credentials'}
-              subLabel={`This will remove all remote.it user credentials from this device. 
-                Credentials should be removed before transferring a device. 
-                The next user to sign in with elevated permissions will claim this device. 
-                The hosted services will only remain active until the next reboot 
-                if another user does not sign in and claim the device.`}
-              icon="user-slash"
-              onClick={clearWarning}
-            />
           </List>
         </>
       )}
@@ -145,5 +150,5 @@ export const SettingsPage = () => {
 }
 
 const useStyles = makeStyles({
-  header: { '& img': { marginBottom: spacing.sm } },
+  logo: { marginBottom: spacing.xs },
 })

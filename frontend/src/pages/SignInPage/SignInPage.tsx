@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { SignInFormController } from '../../controllers/SignInFormController/SignInFormController'
+import { SignInForm } from '../../components/SignInForm'
 import { Link, Typography } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import { isElectron } from '../../services/Browser'
@@ -7,11 +7,11 @@ import { Logo } from '../../components/Logo'
 import { Body } from '../../components/Body'
 import { Icon } from '../../components/Icon'
 import styles from '../../styling'
-import analytics from '../../helpers/Analytics'
+import analyticsHelper from '../../helpers/analyticsHelper'
 
 export function SignInPage() {
   useEffect(() => {
-    analytics.page('SigninPage')
+    analyticsHelper.page('SigninPage')
   }, [])
 
   const css = useStyles()
@@ -24,7 +24,7 @@ export function SignInPage() {
       <div className={css.logo}>
         <Logo />
       </div>
-      <SignInFormController />
+      <SignInForm />
       {allowSwitch && (
         <div className={css.link}>
           {secure ? (

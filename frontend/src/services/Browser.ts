@@ -28,3 +28,12 @@ export function isWindows() {
   const platform = navigator.platform.toLowerCase()
   return platform.includes('win')
 }
+
+export function isDev() {
+  return environment() === DEVELOPMENT
+}
+
+export function launchBrowser(type: string) {
+  const platform = navigator ? navigator.platform.toLowerCase() : ''
+  return !(type === 'SSH' && platform.includes('win'))
+}
