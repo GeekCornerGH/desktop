@@ -1,4 +1,4 @@
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { emit } from '../services/Controller'
 import analyticsHelper from '../helpers/analyticsHelper'
 
@@ -22,7 +22,7 @@ const state: BinariesState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     async install(force?: boolean) {
       dispatch.binaries.clearError()
       dispatch.binaries.installing()

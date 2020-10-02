@@ -1,5 +1,5 @@
 import { getDevices } from './accounts'
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { findService } from '../models/devices'
 import { DEFAULT_TARGET } from '../shared/constants'
 import { emit } from '../services/Controller'
@@ -65,7 +65,7 @@ const state: IBackendState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     async targetDeviceUpdated(targetDevice: ITargetDevice, globalState: any) {
       const { ui, backend, devices } = dispatch
       const { device } = globalState.backend

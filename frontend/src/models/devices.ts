@@ -5,9 +5,8 @@ import { cleanOrphanConnections } from '../helpers/connectionHelper'
 import { graphQLSetAttributes } from '../services/graphQLMutation'
 import { r3, hasCredentials } from '../services/remote.it'
 import { ApplicationState } from '../store'
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { emit } from '../services/Controller'
-
 
 type DeviceParams = { [key: string]: any }
 
@@ -49,7 +48,7 @@ const state: IDeviceState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     async init(_, globalState) {
       dispatch.devices.fetch(true)
       if (globalState.accounts.activeId !== globalState.auth.user?.id) {
@@ -76,7 +75,7 @@ export default createModel({
         ids: append ? [] : [device.uid].concat(connections.map((c: IConnection) => c.id)),
       }
 
-      if (!await hasCredentials()) return
+      if (!(await hasCredentials())) return
 
       set({ fetching: true })
       const { devices, total, contacts, error } = await graphQLFetchProcessor(options)
@@ -102,7 +101,7 @@ export default createModel({
       if (!hasCredentials()) return
       let result
 
-      if (!await hasCredentials()) return
+      if (!(await hasCredentials())) return
 
       accountId = accountId || getAccountId(globalState)
 

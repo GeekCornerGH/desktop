@@ -1,4 +1,4 @@
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { getOwnDevices } from './accounts'
 import { TARGET_PLATFORMS } from '../components/TargetPlatform'
 
@@ -45,7 +45,7 @@ const state: UIState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     devicesUpdated(_, globalState: any) {
       const all: IDevice[] = getOwnDevices(globalState)
       const targetDevice: ITargetDevice = globalState.backend.device

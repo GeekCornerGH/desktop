@@ -1,4 +1,4 @@
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { DEFAULT_TARGET } from '../shared/constants'
 import { graphQLRequest, graphQLGetErrors, graphQLHandleError } from '../services/graphQL'
 
@@ -12,7 +12,7 @@ const state: IApplicationTypeState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     async fetch() {
       try {
         const result = await graphQLRequest(

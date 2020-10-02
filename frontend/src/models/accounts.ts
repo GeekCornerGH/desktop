@@ -1,4 +1,4 @@
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { ApplicationState } from '../store'
 import { graphQLLinkAccount } from '../services/graphQLMutation'
 import { graphQLGetErrors, graphQLHandleError } from '../services/graphQL'
@@ -31,7 +31,7 @@ const state: IAccountsState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     async init(_, globalState) {
       let activeId = window.localStorage.getItem(ACCOUNT_KEY)
       activeId = activeId && JSON.parse(activeId)

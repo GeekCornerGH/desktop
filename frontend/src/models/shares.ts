@@ -1,4 +1,4 @@
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { graphQLUnShareDevice, graphQLShareDevice } from '../services/graphQLMutation'
 import { graphQLGetErrors, graphQLHandleError } from '../services/graphQL'
 import { attributeName } from '../shared/nameHelper'
@@ -21,7 +21,7 @@ const state: IShareState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     async delete(userDevice: { deviceId: string; email: string }) {
       const { deviceId, email } = userDevice
       const { set } = dispatch.shares

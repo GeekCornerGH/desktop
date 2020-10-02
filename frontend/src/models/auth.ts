@@ -1,7 +1,7 @@
 import { CLIENT_ID, API_URL, DEVELOPER_KEY, CALLBACK_URL } from '../shared/constants'
 import { r3 } from '../services/remote.it'
 import { IUser as LegacyUser } from 'remote.it'
-import { createModel } from '@rematch/core'
+import { createModel, RematchDispatch } from '@rematch/core'
 import { emit } from '../services/Controller'
 import Controller from '../services/Controller'
 import analyticsHelper from '../helpers/analyticsHelper'
@@ -33,7 +33,7 @@ const state: AuthState = {
 
 export default createModel({
   state,
-  effects: (dispatch: any) => ({
+  effects: (dispatch: RematchDispatch) => ({
     async init(_: void, rootState: any) {
       let { user } = rootState.auth
 
