@@ -30,6 +30,7 @@ type IDeviceState = DeviceParams & {
   filter: 'all' | 'active' | 'inactive'
   sort: 'name' | '-name' | 'state' | '-state' | 'color' | '-color'
   owner: 'all' | 'me' | 'others'
+  platform: number
   size: number
   from: number
   contacts: IUserRef[]
@@ -49,6 +50,7 @@ export const state: IDeviceState = {
   filter: 'all',
   sort: 'name',
   owner: 'all',
+  platform: 0,
   size: 50,
   from: 0,
   contacts: [],
